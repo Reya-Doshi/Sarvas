@@ -645,33 +645,39 @@ export default function PublicLanding() {
 
       {/* ────────── Navigation ────────── */}
       <nav className="nav-bar">
-        <div className="nav-brand">
-          <div className="nav-brand-icon" style={{
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            padding: 0,
-            overflow: 'hidden',
-            background: 'transparent',
-            border: '2px solid rgba(2, 132, 199, 0.4)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-            flexShrink: 0
-          }}>
-            <img
-              src="/sarvas_logo.png"
-              alt="SARVAS Logo"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
-          <div>
-            <div className="nav-brand-title" style={{ fontSize: '1.35rem', fontWeight: 900, letterSpacing: '1.2px' }}>
-              SARVAS
+        <Link
+          to="/"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          <div className="nav-brand" style={{ cursor: 'pointer' }}>
+            <div className="nav-brand-icon" style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              padding: 0,
+              overflow: 'hidden',
+              background: 'transparent',
+              border: '2px solid rgba(2, 132, 199, 0.4)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+              flexShrink: 0
+            }}>
+              <img
+                src="/sarvas_logo.png"
+                alt="SARVAS Logo"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
-            <div className="nav-brand-sub" style={{ fontSize: '0.74rem', letterSpacing: '1px', fontWeight: 800, color: '#0284c7' }}>
-              From Slick to Suspect
+            <div>
+              <div className="nav-brand-title" style={{ fontSize: '1.35rem', fontWeight: 900, letterSpacing: '1.2px' }}>
+                SARVAS
+              </div>
+              <div className="nav-brand-sub" style={{ fontSize: '0.74rem', letterSpacing: '1px', fontWeight: 800, color: '#0284c7' }}>
+                From Slick to Suspect
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
 
         <div className="nav-links">
           <a href="#surveillance-map">National Radar Map</a>
@@ -1891,25 +1897,31 @@ export default function PublicLanding() {
       {/* ────────── Footer ────────── */}
       <footer className="page-footer">
         <div className="footer-inner">
-          <div className="footer-brand">
-            <div className="nav-brand-icon" style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              padding: 0,
-              overflow: 'hidden',
-              background: 'transparent',
-              border: '2px solid rgba(2, 132, 199, 0.4)',
-              flexShrink: 0
-            }}>
-              <img
-                src="/sarvas_logo.png"
-                alt="SARVAS Logo"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+          <Link
+            to="/"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <div className="footer-brand" style={{ cursor: 'pointer' }}>
+              <div className="nav-brand-icon" style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                padding: 0,
+                overflow: 'hidden',
+                background: 'transparent',
+                border: '2px solid rgba(2, 132, 199, 0.4)',
+                flexShrink: 0
+              }}>
+                <img
+                  src="/sarvas_logo.png"
+                  alt="SARVAS Logo"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              <span className="footer-brand-name">SARVAS — FROM SLICK TO SUSPECT</span>
             </div>
-            <span className="footer-brand-name">SARVAS — FROM SLICK TO SUSPECT</span>
-          </div>
+          </Link>
 
           <p className="footer-description">
             Dedicated to open environmental transparency, public disaster awareness, and the preservation

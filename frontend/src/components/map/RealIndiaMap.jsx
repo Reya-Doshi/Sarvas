@@ -29,9 +29,19 @@ const MAP_STYLE = {
   ]
 };
 
-// Static default framing perfectly centered on sovereign Indian coastline
-const DEFAULT_CENTER = [79.2, 19.5];
-const DEFAULT_ZOOM = 4.35;
+// Responsive framing centered on sovereign Indian coastline
+const getResponsiveMapFrame = () => {
+  if (typeof window === 'undefined') {
+    return { center: [79.2, 19.5], zoom: 4.35, minZoom: 3.5 };
+  }
+  const w = window.innerWidth;
+  if (w <= 480) {
+    return { center: [79.2, 20.2], zoom: 3.25, minZoom: 2.8 };
+  } else if (w <= 768) {
+    return { center: [79.2, 19.8], zoom: 3.75, minZoom: 3.0 };
+  }
+  return { center: [79.2, 19.5], zoom: 4.35, minZoom: 3.5 };
+};
 
 export default function RealIndiaMap({
   selectedIncident,
@@ -45,19 +55,21 @@ export default function RealIndiaMap({
   const markersRef = useRef([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Initialize MapLibre — locked / static view framing India cleanly
+  // Initialize MapLibre — responsive framing for mobile, tablet, and desktop
   useEffect(() => {
     if (!mapContainer.current) return;
 
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
+    const frame = getResponsiveMapFrame();
+
     const map = new Map({
       container: mapContainer.current,
       style: MAP_STYLE,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-      minZoom: 3.5,
+      center: frame.center,
+      zoom: frame.zoom,
+      minZoom: frame.minZoom,
       maxZoom: 9.0,
       // Static map: disable accidental scrolling/pitching/rotation while browsing
       dragPan: false,
@@ -72,10 +84,23 @@ export default function RealIndiaMap({
 
     mapRef.current = map;
 
+    const handleWindowResize = () => {
+      if (!mapRef.current) return;
+      const rf = getResponsiveMapFrame();
+      mapRef.current.jumpTo({
+        center: rf.center,
+        zoom: rf.zoom,
+        pitch: 0,
+        bearing: 0
+      });
+    };
+    window.addEventListener('resize', handleWindowResize);
+
     map.on('load', () => {
+      const rf = getResponsiveMapFrame();
       map.jumpTo({
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
+        center: rf.center,
+        zoom: rf.zoom,
         pitch: 0,
         bearing: 0
       });
@@ -167,6 +192,7 @@ export default function RealIndiaMap({
     });
 
     return () => {
+      window.removeEventListener('resize', handleWindowResize);
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       map.remove();

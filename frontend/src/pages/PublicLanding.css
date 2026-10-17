@@ -1047,37 +1047,78 @@
 
 @media (max-width: 640px) {
   .landing-dark .hero-title {
-    font-size: 3.2rem;
+    font-size: clamp(1.65rem, 5.8vw, 2.15rem);
     font-weight: 900;
     color: #ffffff;
-    line-height: 1.15;
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
     text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
+  }
+
+  .landing-dark .hero-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0 auto 20px;
+    max-width: 100%;
   }
 
   .landing-dark .hero-metrics-strip {
     display: flex;
     align-items: center;
-    gap: 22px;
-    background: rgba(5, 18, 36, 0.85);
+    justify-content: space-around;
+    gap: 12px 10px;
+    flex-wrap: wrap;
+    background: rgba(5, 18, 36, 0.9);
     border: 1px solid rgba(56, 189, 248, 0.35);
     border-radius: 12px;
-    padding: 14px 22px;
-    margin-bottom: 34px;
-    max-width: 580px;
+    padding: 12px 14px;
+    margin: 0 auto 24px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     backdrop-filter: blur(12px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   }
 
+  .landing-dark .hero-metric-item {
+    text-align: center;
+    flex: 1 1 28%;
+    min-width: 75px;
+  }
+
+  .landing-dark .hero-metric-num {
+    font-size: 1.35rem;
+  }
+
+  .landing-dark .hero-metric-label {
+    font-size: 0.62rem;
+  }
+
   .landing-dark .hero-metric-divider {
-    width: 1px;
-    height: 30px;
-    background: rgba(56, 189, 248, 0.25);
+    display: none;
+  }
+
+  .landing-dark .hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .landing-dark .hero-cta-primary,
+  .landing-dark .hero-cta-secondary,
+  .landing-dark .hero-cta-tertiary {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 16px;
+    box-sizing: border-box;
   }
 
   .landing-dark .radar-term-telemetry {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
   }
 }
 
@@ -2065,39 +2106,81 @@
 
 /* ── Responsive ── */
 
+@media (max-width: 1024px) {
+  .landing-dark .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 0 24px;
+    margin: -20px auto 0;
+  }
+}
+
 @media (max-width: 768px) {
+  .landing-dark .gov-top-bar {
+    padding: 6px 16px;
+  }
+
+  .landing-dark .gov-status-right {
+    display: none;
+  }
+
+  .landing-dark .nav-bar {
+    padding: 12px 18px;
+  }
+
   .landing-dark .nav-links {
     display: none;
   }
 
+  .landing-dark .nav-emergency {
+    display: none;
+  }
+
+  .landing-dark .hero-section {
+    padding: 50px 18px 40px;
+  }
+
   .landing-dark .hero-title {
-    font-size: 3.2rem;
+    font-size: clamp(1.8rem, 6vw, 2.35rem);
     font-weight: 900;
     color: #ffffff;
-    line-height: 1.15;
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
     text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
   }
 
   .landing-dark .hero-subtitle {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     color: #e0f2fe;
-    line-height: 1.7;
-    max-width: 620px;
-    margin: 0 0 32px 0;
+    line-height: 1.6;
+    max-width: 100%;
+    margin: 0 auto 24px;
     text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
   }
 
   .landing-dark .stats-section {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    max-width: 1400px;
-    margin: -35px auto 0;
-    padding: 0 36px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    max-width: 100%;
+    margin: 20px auto 0;
+    padding: 0 18px;
     position: relative;
     z-index: 20;
+  }
+
+  .landing-dark .stat-card {
+    padding: 20px 16px;
+  }
+
+  .landing-dark .stat-value {
+    font-size: 1.8rem;
+  }
+
+  .landing-dark .map-canvas {
+    height: 440px !important;
+    min-height: 380px !important;
   }
 
   .landing-dark .eco-threats-grid {
@@ -2115,36 +2198,185 @@
   .landing-dark .pledge-section {
     padding: 24px;
   }
+
+  .landing-dark .species-console-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-dark .dossier-dual-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
+  .landing-dark .gov-top-bar {
+    padding: 5px 12px;
+    font-size: 0.62rem;
+  }
+
+  .landing-dark .gov-agency {
+    display: none;
+  }
+
+  .landing-dark .nav-bar {
+    padding: 10px 14px;
+  }
+
+  .landing-dark .nav-brand-title {
+    font-size: 1.15rem;
+  }
+
+  .landing-dark .nav-brand-sub {
+    display: none;
+  }
+
+  .landing-dark .nav-login-btn {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+  }
+
+  .landing-dark .hero-section {
+    padding: 36px 14px 30px;
+  }
+
+  .landing-dark .hero-badge {
+    padding: 5px 12px;
+    font-size: 0.65rem;
+    margin-bottom: 16px;
+  }
+
+  .landing-dark .hero-title {
+    font-size: clamp(1.45rem, 5.5vw, 1.85rem);
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.22;
+    margin-bottom: 14px;
+    letter-spacing: -0.2px;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
+  }
+
+  .landing-dark .hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0 auto 20px;
+  }
+
+  .landing-dark .hero-metrics-strip {
+    padding: 10px 12px;
+    gap: 10px 8px;
+    margin: 0 auto 20px;
+  }
+
+  .landing-dark .hero-metric-num {
+    font-size: 1.25rem;
+  }
+
+  .landing-dark .hero-metric-label {
+    font-size: 0.6rem;
+  }
+
   .landing-dark .stats-section {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    max-width: 1400px;
-    margin: -35px auto 0;
-    padding: 0 36px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 100%;
+    margin: 16px auto 0;
+    padding: 0 14px;
     position: relative;
     z-index: 20;
   }
 
-  .landing-dark .hero-title {
-    font-size: 3.2rem;
-    font-weight: 900;
-    color: #ffffff;
-    line-height: 1.15;
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
-    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
-  }
-
-  .landing-dark .nav-bar {
-    padding: 12px 16px;
-  }
-
   .landing-dark .main-content {
-    padding: 32px 16px 60px;
+    padding: 28px 14px 50px;
+  }
+
+  .landing-dark .section-title {
+    font-size: 1.5rem;
+  }
+
+  .landing-dark .section-desc {
+    font-size: 0.85rem;
+  }
+
+  .landing-dark .glass-card {
+    padding: 16px 14px;
+  }
+
+  .landing-dark .map-canvas {
+    height: 380px !important;
+    min-height: 320px !important;
+    border-radius: 12px;
+  }
+
+  .landing-dark .map-legend {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    font-size: 0.62rem;
+    gap: 4px;
+    max-width: 150px;
+  }
+
+  .landing-dark .map-incident-popup {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+
+  .landing-dark .radar-term-telemetry {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .landing-dark .species-filter-chips {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .landing-dark .species-chip {
+    padding: 6px 12px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .landing-dark .dossier-metrics-strip {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .landing-dark .dossier-title {
+    font-size: 1.25rem;
+  }
+
+  .landing-dark .species-dossier-panel {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  .landing-dark .dossier-column {
+    padding: 14px 12px;
+  }
+
+  .landing-dark .footer-inner {
+    padding: 24px 14px;
+  }
+
+  .landing-dark .footer-emergency-bar {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .landing-dark .footer-divider-sep {
+    display: none;
   }
 }
 

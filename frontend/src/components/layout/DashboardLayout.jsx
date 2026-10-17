@@ -154,7 +154,22 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
             alignItems: 'center',
             justifyContent: 'space-between',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              onClick={() => {
+                setSidebarOpen(false);
+                navigate('/');
+              }}
+              role="button"
+              tabIndex={0}
+              title="Return to Public Dashboard"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
               <img
                 src="/sarvas_logo.png"
                 alt="SARVAS"
@@ -164,6 +179,7 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
                   borderRadius: '50%',
                   objectFit: 'cover',
                   border: '1.5px solid #0f2e59',
+                  transition: 'transform 0.15s ease',
                 }}
               />
               <div>
@@ -184,7 +200,7 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
                   </span>
                 </div>
                 <div style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '1px' }}>
-                  Coast Guard Operations
+                  {title || 'Maritime Intelligence'}
                 </div>
               </div>
             </div>
@@ -377,9 +393,38 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
               </svg>
             </button>
 
-            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f2e59' }}>
-              {title || 'Coast Guard Operations'}
-            </span>
+            {/* Clickable SARVAS Logo & Title linking to Public Dashboard */}
+            <div
+              onClick={() => navigate('/')}
+              role="button"
+              tabIndex={0}
+              title="Return to Public Dashboard"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                padding: '2px 6px',
+                borderRadius: '6px',
+                userSelect: 'none',
+              }}
+            >
+              <img
+                src="/sarvas_logo.png"
+                alt="SARVAS"
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1.5px solid #0f2e59',
+                  flexShrink: 0
+                }}
+              />
+              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f2e59' }}>
+                {title || 'Coast Guard Operations'}
+              </span>
+            </div>
 
             <span
               className="header-region-badge"

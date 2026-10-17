@@ -39,7 +39,13 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+        <div
+          onClick={() => navigate('/')}
+          role="button"
+          tabIndex={0}
+          title="Return to Public Dashboard"
+          style={{ textAlign: 'center', marginBottom: '14px', cursor: 'pointer' }}
+        >
           <img
             src="/sarvas_logo.png"
             alt="SARVAS Logo"
@@ -50,7 +56,8 @@ export default function Login() {
               objectFit: 'cover',
               border: '3px solid #0284c7',
               boxShadow: '0 4px 16px rgba(2, 132, 199, 0.25)',
-              display: 'inline-block'
+              display: 'inline-block',
+              transition: 'transform 0.15s ease'
             }}
           />
           <div style={{ marginTop: '10px' }}>
