@@ -13,7 +13,6 @@ export default function TelemetryConfidenceView({
   const [loading, setLoading] = useState(false);
   const [downloadingDossier, setDownloadingDossier] = useState(false);
   const [showDeepScience, setShowDeepScience] = useState(false);
-  const [activeScienceTab, setActiveScienceTab] = useState('damping');
 
   const activeSpill = selectedSpill || (spills && spills.length > 0 ? spills[0] : null);
 
@@ -51,31 +50,49 @@ export default function TelemetryConfidenceView({
     return (
       <div style={{
         background: '#ffffff',
-        borderRadius: '10px',
-        padding: '50px 20px',
+        borderRadius: '8px',
+        padding: '48px 24px',
         textAlign: 'center',
-        border: '1px solid #cbd5e1',
-        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)'
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
       }}>
-        <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🛰️</div>
-        <h3 style={{ color: '#0f2e59', marginBottom: '8px', fontSize: '1.1rem', fontWeight: 800 }}>No Operational Incident Selected</h3>
-        <p style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto 16px auto' }}>
-          Select an incident from the operational list or ingest a new Sentinel-1 SAR pass to inspect real-time neural telemetry.
+        <div style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 12px auto',
+          color: '#64748b'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+        </div>
+        <h3 style={{ color: '#0f172a', marginBottom: '6px', fontSize: '1rem', fontWeight: 700 }}>
+          No Operational Incident Selected
+        </h3>
+        <p style={{ color: '#64748b', fontSize: '0.8rem', maxWidth: '420px', margin: '0 auto 16px auto', lineHeight: 1.4 }}>
+          Select an active incident or ingest a new Sentinel-1 SAR imagery pass to view radar telemetry and neural confidence metrics.
         </p>
         <button
           onClick={() => onNavigate && onNavigate('upload')}
           style={{
-            padding: '10px 20px',
-            background: 'linear-gradient(135deg, #0f2e59 0%, #0284c7 100%)',
-            color: '#fff',
+            padding: '8px 16px',
+            background: '#0f172a',
+            color: '#ffffff',
             border: 'none',
-            borderRadius: '6px',
-            fontWeight: 800,
+            borderRadius: '4px',
+            fontWeight: 600,
             cursor: 'pointer',
-            fontSize: '0.82rem'
+            fontSize: '0.78rem'
           }}
         >
-          ⚡ Upload SAR Imagery Pass
+          Upload SAR Imagery →
         </button>
       </div>
     );
@@ -111,8 +128,8 @@ export default function TelemetryConfidenceView({
     : (isCleanSea ? seaProb : (activeSpill.confidence_score != null ? Math.round(activeSpill.confidence_score * 100) : oilProb));
 
   const classificationText = isLookalike
-    ? 'LOOK-ALIKE (BIOGENIC / WIND SHADOW)'
-    : (isCleanSea ? 'CLEAN SEA / AMBIENT WAVES' : 'CONFIRMED CRUDE OIL SLICK');
+    ? 'LOOK-ALIKE SUPPRESSED'
+    : (isCleanSea ? 'CLEAN SEA SURFACE' : 'CONFIRMED CRUDE SLICK');
 
   // Physical measurements
   const rawContrast = activeSpill.contrast_db || modelConf.contrast_db;
@@ -129,97 +146,90 @@ export default function TelemetryConfidenceView({
 
   const topCandidate = suspects && suspects.length > 0 ? suspects[0] : null;
 
-  // Filter verified vs lookalike spills for quick judge switcher
+  // Filter verified vs lookalike spills for quick scenario toggle
   const verifiedSpills = spills.filter(s => s.validation_status !== 'lookalike' && s.validation_status !== 'dismissed');
   const lookalikeSpills = spills.filter(s => s.validation_status === 'lookalike');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1280px', margin: '0 auto' }}>
       <style>{`
-        .judge-toggle-pill {
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        .pro-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
-        .judge-toggle-pill:hover {
-          transform: translateY(-1px);
+        .pro-card:hover {
+          border-color: #cbd5e1;
         }
-        .metric-dial-card:hover {
-          border-color: #0284c7 !important;
-          box-shadow: 0 6px 16px rgba(2, 132, 199, 0.08) !important;
+        .pro-scenario-tab {
+          transition: all 0.15s ease;
+        }
+        .pro-scenario-tab:hover {
+          border-color: #0f172a !important;
+          background-color: #f8fafc !important;
         }
       `}</style>
 
-      {/* TOP BAR: Quick Judge Demo Switcher Ribbon */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: '10px',
-        padding: '12px 18px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px',
-        boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)'
-      }}>
+      {/* 1. SCENARIO / INCIDENT SELECTOR BAR */}
+      <div className="pro-card" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f2e59', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            ⚡ Instant Judge Scenarios:
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Operational Context:
           </span>
 
-          {/* Preset Scenario 1: Real Oil Spill */}
           {verifiedSpills.length > 0 && (
             <button
               type="button"
-              className="judge-toggle-pill"
+              className="pro-scenario-tab"
               onClick={() => onSelectSpill && onSelectSpill(verifiedSpills[0])}
               style={{
-                background: !isLookalike && !isCleanSea ? '#fee2e2' : '#f8fafc',
-                color: !isLookalike && !isCleanSea ? '#991b1b' : '#334155',
-                border: !isLookalike && !isCleanSea ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
-                padding: '5px 12px',
-                borderRadius: '20px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
+                background: !isLookalike && !isCleanSea ? '#0f172a' : '#ffffff',
+                color: !isLookalike && !isCleanSea ? '#ffffff' : '#334155',
+                border: !isLookalike && !isCleanSea ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px'
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }} />
-              Scenario A: Confirmed Crude Spill ({verifiedSpills[0].name})
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: !isLookalike && !isCleanSea ? '#ef4444' : '#94a3b8' }} />
+              Verified Crude Spill ({verifiedSpills[0].name})
             </button>
           )}
 
-          {/* Preset Scenario 2: False Alarm Look-alike */}
           {lookalikeSpills.length > 0 && (
             <button
               type="button"
-              className="judge-toggle-pill"
+              className="pro-scenario-tab"
               onClick={() => onSelectSpill && onSelectSpill(lookalikeSpills[0])}
               style={{
-                background: isLookalike ? '#fef3c7' : '#f8fafc',
-                color: isLookalike ? '#92400e' : '#334155',
-                border: isLookalike ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-                padding: '5px 12px',
-                borderRadius: '20px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
+                background: isLookalike ? '#0f172a' : '#ffffff',
+                color: isLookalike ? '#ffffff' : '#334155',
+                border: isLookalike ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px'
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#d97706' }} />
-              Scenario B: Look-Alike False Alarm ({lookalikeSpills[0].name})
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isLookalike ? '#f59e0b' : '#94a3b8' }} />
+              Look-Alike False Alarm ({lookalikeSpills[0].name})
             </button>
           )}
         </div>
 
-        {/* Incident Selector Dropdown */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>All Incidents:</span>
+          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Select Mission:</span>
           <select
             value={activeSpill.id}
             onChange={(e) => {
@@ -227,68 +237,51 @@ export default function TelemetryConfidenceView({
               if (target && onSelectSpill) onSelectSpill(target);
             }}
             style={{
-              padding: '5px 10px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              color: '#0f2e59',
-              background: '#f8fafc',
+              padding: '4px 8px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: '#0f172a',
+              background: '#ffffff',
               border: '1px solid #cbd5e1',
-              borderRadius: '6px',
+              borderRadius: '4px',
               cursor: 'pointer'
             }}
           >
             {spills.map(s => (
               <option key={s.id} value={s.id}>
-                {s.name} (#{s.id}) · {s.validation_status?.toUpperCase() || 'SPILL'}
+                {s.name} (#{s.id}) · {s.validation_status?.toUpperCase()}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* EXECUTIVE HUD: Hero Decision Centerpiece */}
-      <div style={{
-        background: isLookalike
-          ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
-          : (isCleanSea
-              ? 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'
-              : 'linear-gradient(135deg, #0a1628 0%, #0f2e59 100%)'),
-        color: isLookalike ? '#78350f' : (isCleanSea ? '#0369a1' : '#ffffff'),
-        borderRadius: '12px',
-        padding: '24px 28px',
-        border: isLookalike
-          ? '2px solid #f59e0b'
-          : (isCleanSea ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.12)'),
-        boxShadow: '0 6px 20px rgba(10, 22, 40, 0.12)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '24px'
-      }}>
-        {/* Left: Animated Radial Confidence Ring */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
-          <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
-            <svg width="100" height="100" viewBox="0 0 100 100">
+      {/* 2. EXECUTIVE DECISION HUD */}
+      <div className="pro-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
+
+        {/* Circular Gauge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: 0 }}>
+            <svg width="92" height="92" viewBox="0 0 92 92">
               <circle
-                cx="50"
-                cy="50"
-                r="42"
+                cx="46"
+                cy="46"
+                r="38"
                 fill="none"
-                stroke={isLookalike ? 'rgba(217, 119, 6, 0.2)' : (isCleanSea ? 'rgba(2, 132, 199, 0.2)' : 'rgba(255, 255, 255, 0.15)')}
-                strokeWidth="9"
+                stroke="#e2e8f0"
+                strokeWidth="6"
               />
               <circle
-                cx="50"
-                cy="50"
-                r="42"
+                cx="46"
+                cy="46"
+                r="38"
                 fill="none"
-                stroke={isLookalike ? '#d97706' : (isCleanSea ? '#0284c7' : '#38bdf8')}
-                strokeWidth="9"
-                strokeDasharray={`${(primaryScore / 100) * 264} 264`}
+                stroke={isLookalike ? '#d97706' : (isCleanSea ? '#0284c7' : '#0f172a')}
+                strokeWidth="6"
+                strokeDasharray={`${(primaryScore / 100) * 238.7} 238.7`}
                 strokeLinecap="round"
-                transform="rotate(-90 50 50)"
-                style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                transform="rotate(-90 46 46)"
+                style={{ transition: 'stroke-dasharray 0.6s ease' }}
               />
             </svg>
             <div style={{
@@ -302,339 +295,297 @@ export default function TelemetryConfidenceView({
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <span style={{ fontSize: '1.45rem', fontWeight: 900, lineHeight: 1 }}>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                 {primaryScore}%
               </span>
-              <span style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', opacity: 0.8 }}>
-                Confidence
+              <span style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>
+                Score
               </span>
             </div>
           </div>
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{
-                background: isLookalike ? '#d97706' : (isCleanSea ? '#0284c7' : '#dc2626'),
-                color: '#ffffff',
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                padding: '3px 10px',
-                borderRadius: '20px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase'
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                padding: '2px 8px',
+                borderRadius: '3px',
+                background: isLookalike ? '#fffbeb' : (isCleanSea ? '#f0f9ff' : '#fef2f2'),
+                color: isLookalike ? '#b45309' : (isCleanSea ? '#0369a1' : '#b91c1c'),
+                border: isLookalike ? '1px solid #fde68a' : (isCleanSea ? '1px solid #bae6fd' : '1px solid #fecaca')
               }}>
                 {classificationText}
               </span>
-              <span style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 600 }}>
-                {activeSpill.name} (#{activeSpill.id}) · {activeSpill.region?.replace(/_/g, ' ').toUpperCase() || 'WEST COAST'}
+              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                Mission: {activeSpill.name} · {activeSpill.region?.replace(/_/g, ' ').toUpperCase() || 'WEST COAST'}
               </span>
             </div>
 
-            <h2 style={{
-              margin: '8px 0 6px 0',
-              fontSize: '1.25rem',
-              fontWeight: 800,
-              color: isLookalike ? '#78350f' : (isCleanSea ? '#0c4a6e' : '#ffffff'),
-              letterSpacing: '-0.2px'
-            }}>
+            <h2 style={{ margin: '6px 0 4px 0', fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>
               {isLookalike
-                ? 'Natural Surface Film Suppressed — No Legal Violation'
+                ? 'Natural Biogenic Film or Low-Wind Shadow'
                 : (isCleanSea
-                    ? 'Uniform Surface Sea Roughness — No Hydrocarbon Spill'
-                    : 'Illegal Bunker/Crude Discharge Detected in Indian EEZ')}
+                    ? 'Uniform Sea Backscatter (No Anomalous Slick)'
+                    : 'Anthropogenic Hydrocarbon Discharge Detected')}
             </h2>
 
-            <p style={{
-              margin: 0,
-              fontSize: '0.8rem',
-              lineHeight: 1.45,
-              maxWidth: '680px',
-              color: isLookalike ? '#92400e' : (isCleanSea ? '#0369a1' : '#cbd5e1')
-            }}>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45, maxWidth: '640px' }}>
               {isLookalike
-                ? `ERA5 wind speed of ${windSpeed} m/s falls below the Bragg resonance threshold (< 3.0 m/s), creating natural specular calm shadows. U-Net model and physics gating successfully suppressed false alarm.`
+                ? `Measured wind velocity (${windSpeed} m/s) is below Bragg scattering stability (< 3.0 m/s). Low capillary roughness creates specular look-alikes. U-Net model and physics gating correctly suppressed false alarm.`
                 : (isCleanSea
-                    ? `Backscatter contrast (${contrastDb} dB) shows uniform sea surface roughness under active wind. Zero evidence of mineral damping.`
-                    : `Capillary-gravity wave damping (${contrastDb} dB) and high elongation (${elongationVal}:1) indicate intentional moving vessel discharge. Atmospheric boundary layer (${windSpeed} m/s) confirms authentic SAR detection window.`)}
+                    ? `Surface backscatter shows uniform sea roughness (${contrastDb} dB contrast) under ${windSpeed} m/s wind. Zero anomalous hydrocarbon signatures.`
+                    : `Capillary wave damping (${contrastDb} dB) and linear elongation (${elongationVal}:1) confirm moving vessel discharge. Wind speed (${windSpeed} m/s) validates authentic SAR detection window.`)}
             </p>
           </div>
         </div>
 
-        {/* Right: Quick Multi-Class Probability Distribution */}
+        {/* Softmax Probability Distribution */}
         <div style={{
-          background: isLookalike ? 'rgba(255,255,255,0.7)' : (isCleanSea ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.08)'),
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '6px',
           padding: '14px 18px',
-          borderRadius: '10px',
-          border: '1px solid rgba(0,0,0,0.06)',
           minWidth: '220px'
         }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-            Multi-Class AI Probabilities:
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+            Multi-Class Probabilities
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700 }}>
-                <span>Crude Oil:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#0f172a', fontWeight: 600 }}>
+                <span>Crude Discharge</span>
                 <span>{oilProb}%</span>
               </div>
-              <div style={{ width: '100%', height: '5px', background: 'rgba(0,0,0,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${oilProb}%`, height: '100%', background: '#dc2626' }} />
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '3px' }}>
+                <div style={{ width: `${oilProb}%`, height: '100%', background: '#b91c1c' }} />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700 }}>
-                <span>Biogenic Look-Alike:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#0f172a', fontWeight: 600 }}>
+                <span>Look-Alike Shadow</span>
                 <span>{lookalikeProb}%</span>
               </div>
-              <div style={{ width: '100%', height: '5px', background: 'rgba(0,0,0,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${lookalikeProb}%`, height: '100%', background: '#f59e0b' }} />
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '3px' }}>
+                <div style={{ width: `${lookalikeProb}%`, height: '100%', background: '#d97706' }} />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700 }}>
-                <span>Clean Sea:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#0f172a', fontWeight: 600 }}>
+                <span>Ambient Sea</span>
                 <span>{seaProb}%</span>
               </div>
-              <div style={{ width: '100%', height: '5px', background: 'rgba(0,0,0,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '3px' }}>
                 <div style={{ width: `${seaProb}%`, height: '100%', background: '#0284c7' }} />
               </div>
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* THE 4 CORE PHYSICS INSTRUMENTS (Visual Dials, NOT Walls of Text) */}
+      {/* 3. THE 4 CORE PHYSICS INSTRUMENTS */}
       <div>
-        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#0f2e59' }}>
-            Physically-Grounded Radar Telemetry & Remote Sensing Metrics
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Radar Telemetry & Marine Physical Metrics
           </h3>
-          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-            Sentinel-1 C-SAR IW Mode · Ground Range Detected (GRD)
+          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+            Sentinel-1 C-SAR IW GRD
           </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
 
-          {/* Instrument 1: Backscatter Contrast (Δσ°) */}
-          <div className="metric-dial-card" style={{
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '10px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease'
-          }}>
+          {/* Instrument 1: Backscatter Contrast */}
+          <div className="pro-card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                1. Backscatter Damping (Δσ°)
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                Backscatter Damping (Δσ°)
               </span>
               <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: Math.abs(contrastDb) >= 5 ? '#fee2e2' : '#fef3c7',
-                color: Math.abs(contrastDb) >= 5 ? '#991b1b' : '#92400e'
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '3px',
+                background: Math.abs(contrastDb) >= 5 ? '#fef2f2' : '#fffbeb',
+                color: Math.abs(contrastDb) >= 5 ? '#b91c1c' : '#b45309',
+                border: Math.abs(contrastDb) >= 5 ? '1px solid #fecaca' : '1px solid #fde68a'
               }}>
-                {Math.abs(contrastDb) >= 5 ? 'STRONG DAMPING' : 'WEAK SHADOW'}
+                {Math.abs(contrastDb) >= 5 ? 'High Damping' : 'Weak Shadow'}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 4px 0' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0 6px 0' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
                 {contrastDb}
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>dB</span>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>dB</span>
             </div>
 
-            {/* Visual Gauge Bar */}
             <div style={{ marginTop: '8px', marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: '#94a3b8', marginBottom: '3px' }}>
                 <span>-10 dB (Heavy Slick)</span>
-                <span>-4 dB</span>
                 <span>0 dB (Clean Sea)</span>
               </div>
-              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', position: 'relative' }}>
-                {/* Damping threshold zone */}
-                <div style={{ position: 'absolute', left: '0%', width: '60%', height: '100%', background: '#dc2626', opacity: 0.2, borderRadius: '3px 0 0 3px' }} />
-                {/* Pointer marker */}
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', position: 'relative' }}>
                 <div style={{
                   position: 'absolute',
                   left: `${Math.max(5, Math.min(95, 100 - (Math.abs(contrastDb) / 10) * 100))}%`,
                   top: '-3px',
-                  width: '12px',
-                  height: '12px',
+                  width: '10px',
+                  height: '10px',
                   borderRadius: '50%',
-                  background: '#0f2e59',
-                  border: '2px solid #ffffff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  background: '#0f172a',
+                  border: '1.5px solid #ffffff',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
                   transform: 'translateX(-50%)'
                 }} />
               </div>
             </div>
 
-            <div style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.35 }}>
-              Viscoelastic damping extinguishes short capillary ripples, producing specular dark return.
+            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.35 }}>
+              Viscoelastic surface film suppresses centimeter-scale capillary-gravity ripples.
             </div>
           </div>
 
-          {/* Instrument 2: ERA5 Atmospheric Wind Gate */}
-          <div className="metric-dial-card" style={{
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '10px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease'
-          }}>
+          {/* Instrument 2: ERA5 Wind Speed */}
+          <div className="pro-card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                2. ERA5 Wind Speed Gate
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                ERA5 Atmospheric Wind
               </span>
               <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: isWindValid ? '#dcfce7' : '#fef3c7',
-                color: isWindValid ? '#166534' : '#92400e'
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '3px',
+                background: isWindValid ? '#f0fdf4' : '#fffbeb',
+                color: isWindValid ? '#15803d' : '#b45309',
+                border: isWindValid ? '1px solid #bbf7d0' : '1px solid #fde68a'
               }}>
-                {isWindValid ? 'OPTIMAL WINDOW' : 'CALM SPECULAR'}
+                {isWindValid ? 'Valid Window' : 'Low Wind'}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 4px 0' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: isWindValid ? '#16a34a' : '#d97706' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0 6px 0' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
                 {windSpeed}
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>m/s</span>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>m/s</span>
             </div>
 
-            {/* Visual Gauge Bar */}
             <div style={{ marginTop: '8px', marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: '#94a3b8', marginBottom: '3px' }}>
                 <span>0 m/s (Calm)</span>
-                <span style={{ color: '#16a34a', fontWeight: 700 }}>3–12 m/s Window</span>
+                <span style={{ color: '#15803d', fontWeight: 600 }}>3–12 m/s Window</span>
                 <span>15 m/s</span>
               </div>
-              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', position: 'relative' }}>
-                {/* Active detection window */}
-                <div style={{ position: 'absolute', left: '20%', width: '60%', height: '100%', background: '#22c55e', opacity: 0.35 }} />
-                {/* Pointer marker */}
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', position: 'relative' }}>
+                <div style={{ position: 'absolute', left: '20%', width: '60%', height: '100%', background: '#bbf7d0' }} />
                 <div style={{
                   position: 'absolute',
                   left: `${Math.max(5, Math.min(95, (windSpeed / 15) * 100))}%`,
                   top: '-3px',
-                  width: '12px',
-                  height: '12px',
+                  width: '10px',
+                  height: '10px',
                   borderRadius: '50%',
-                  background: isWindValid ? '#16a34a' : '#d97706',
-                  border: '2px solid #ffffff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  background: isWindValid ? '#15803d' : '#b45309',
+                  border: '1.5px solid #ffffff',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
                   transform: 'translateX(-50%)'
                 }} />
               </div>
             </div>
 
-            <div style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.35 }}>
+            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.35 }}>
               {isWindValid
-                ? 'Wave roughness sufficient for Bragg resonance without false specular alarms.'
-                : 'Surface wind below 3.0 m/s causes calm specular false alarms.'}
+                ? 'Sufficient surface roughness for Bragg resonance without false specular alarms.'
+                : 'Sub-threshold wind speeds (< 3 m/s) generate specular calm-water false alarms.'}
             </div>
           </div>
 
-          {/* Instrument 3: Morphology & Wake Linearity */}
-          <div className="metric-dial-card" style={{
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '10px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease'
-          }}>
+          {/* Instrument 3: Morphology Linearity */}
+          <div className="pro-card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                3. Morphology Linearity
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                Morphology Linearity
               </span>
               <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: elongationVal >= 2.0 ? '#eff6ff' : '#f1f5f9',
-                color: elongationVal >= 2.0 ? '#1e40af' : '#475569'
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '3px',
+                background: elongationVal >= 2.0 ? '#f0f9ff' : '#f8fafc',
+                color: elongationVal >= 2.0 ? '#0369a1' : '#475569',
+                border: '1px solid #e2e8f0'
               }}>
-                {elongationVal >= 2.0 ? 'VESSEL WAKE' : 'AMORPHOUS'}
+                {elongationVal >= 2.0 ? 'Vessel Wake' : 'Amorphous'}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 4px 0' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0 6px 0' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
                 {elongationVal}:1
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>Aspect</span>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Aspect</span>
             </div>
 
             <div style={{ marginTop: '8px', marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: '#94a3b8', marginBottom: '3px' }}>
                 <span>1:1 Circular</span>
                 <span>2:1 Elliptical</span>
-                <span>4:1 Linear Wake</span>
+                <span>4:1 Linear</span>
               </div>
-              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', position: 'relative' }}>
+              <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', position: 'relative' }}>
                 <div style={{
                   position: 'absolute',
                   left: `${Math.max(5, Math.min(95, (elongationVal / 4) * 100))}%`,
                   top: '-3px',
-                  width: '12px',
-                  height: '12px',
+                  width: '10px',
+                  height: '10px',
                   borderRadius: '50%',
-                  background: '#0284c7',
-                  border: '2px solid #ffffff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  background: '#0f172a',
+                  border: '1.5px solid #ffffff',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
                   transform: 'translateX(-50%)'
                 }} />
               </div>
             </div>
 
-            <div style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.35 }}>
-              High elongation confirms discharge trailing a moving vessel rather than natural algae.
+            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.35 }}>
+              Linear geometry strongly correlates with discharge trailing an underway vessel.
             </div>
           </div>
 
           {/* Instrument 4: Extent & Chronometry */}
-          <div className="metric-dial-card" style={{
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '10px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease'
-          }}>
+          <div className="pro-card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                4. Slick Extent & Chronometry
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                Extent & Chronometry
               </span>
               <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: '#f1f5f9',
-                color: '#334155'
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '3px',
+                background: '#f8fafc',
+                color: '#475569',
+                border: '1px solid #e2e8f0'
               }}>
-                RADAR SEGMENTED
+                Segmented
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 4px 0' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0 6px 0' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
                 {activeSpill.area_sq_km?.toFixed(1) || '14.8'}
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>km²</span>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>km²</span>
             </div>
 
             <div style={{
@@ -642,16 +593,16 @@ export default function TelemetryConfidenceView({
               justifyContent: 'space-between',
               background: '#f8fafc',
               padding: '6px 8px',
-              borderRadius: '6px',
+              borderRadius: '4px',
               border: '1px solid #e2e8f0',
               fontSize: '0.7rem',
               margin: '8px 0 8px 0'
             }}>
-              <span style={{ color: '#64748b' }}>Estimated Age:</span>
-              <span style={{ fontWeight: 800, color: '#0f172a' }}>{ageDisplay}</span>
+              <span style={{ color: '#64748b' }}>Estimated Discharge Age:</span>
+              <span style={{ fontWeight: 700, color: '#0f172a' }}>{ageDisplay}</span>
             </div>
 
-            <div style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.35 }}>
+            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.35 }}>
               Centroid: {activeSpill.centroid_lat?.toFixed(3)}°N, {activeSpill.centroid_lon?.toFixed(3)}°E · 10m pixel pitch.
             </div>
           </div>
@@ -659,205 +610,172 @@ export default function TelemetryConfidenceView({
         </div>
       </div>
 
-      {/* FORENSIC LINK: Primary Culprit Vessel Attribution Snapshot */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: '10px',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)'
-      }}>
-        <div style={{
-          padding: '14px 20px',
-          background: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.1rem' }}>🚢</span>
-            <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#0f2e59' }}>
-              AIS Kinematic Attribution & Suspect Identification
+      {/* 4. FORENSIC VESSEL ATTRIBUTION */}
+      <div className="pro-card" style={{ padding: '20px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+              AIS Forensic Attribution
             </h3>
+            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+              Correlating transponder kinematics against 24-hour hydrodynamic origin cone
+            </div>
           </div>
           <span style={{
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            padding: '3px 8px',
-            borderRadius: '4px',
-            background: isLookalike ? '#fef3c7' : '#fee2e2',
-            color: isLookalike ? '#92400e' : '#991b1b'
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: '3px',
+            background: isLookalike ? '#fffbeb' : '#fef2f2',
+            color: isLookalike ? '#b45309' : '#b91c1c',
+            border: isLookalike ? '1px solid #fde68a' : '1px solid #fecaca'
           }}>
-            {isLookalike ? 'LOOK-ALIKE EXEMPT' : 'NTRO SIH26143 ENGINE'}
+            {isLookalike ? 'EXONERATED' : 'CULPRIT IDENTIFIED'}
           </span>
         </div>
 
-        <div style={{ padding: '20px' }}>
-          {isLookalike ? (
-            <div style={{
-              background: '#fef3c7',
-              border: '1px solid #fde68a',
-              borderRadius: '8px',
-              padding: '16px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
-            }}>
-              <div style={{ fontSize: '1.8rem' }}>🛡️</div>
-              <div>
-                <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.92rem' }}>
-                  No Vessel Charged — Natural Look-Alike Confirmed
-                </div>
-                <div style={{ fontSize: '0.76rem', color: '#78350f', marginTop: '2px', lineHeight: 1.45 }}>
-                  This incident is verified as a natural biogenic surfactant film under calm sea state. Commercial vessels operating in this corridor are exonerated from MARPOL Annex I violation penalties.
-                </div>
+        {isLookalike ? (
+          <div style={{ background: '#fafbfc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
+              ✓
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.85rem' }}>
+                No Commercial Vessel Implicated
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px', lineHeight: 1.4 }}>
+                The detected anomaly has been verified as a natural biogenic surfactant film under calm atmospheric conditions. Vessel traffic in this corridor is cleared of MARPOL Annex I violation liability.
               </div>
             </div>
-          ) : topCandidate ? (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a' }}>
-                    {topCandidate.vessel_name}
-                  </span>
-                  <span style={{ background: '#fee2e2', color: '#991b1b', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px' }}>
-                    PRIMARY SUSPECT
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
-                  MMSI: <code style={{ color: '#0284c7', fontWeight: 700 }}>{topCandidate.vessel_mmsi}</code> · IMO: {topCandidate.vessel_imo || '9801001'} · Type: {topCandidate.vessel_type || 'Crude Oil Tanker'} · Flag: {topCandidate.vessel_flag || 'India'}
-                </div>
+          </div>
+        ) : topCandidate ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
+                  {topCandidate.vessel_name}
+                </span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', padding: '1px 6px', borderRadius: '3px' }}>
+                  PRIMARY SUSPECT
+                </span>
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '3px' }}>
+                MMSI: <code style={{ color: '#0f172a', fontWeight: 600 }}>{topCandidate.vessel_mmsi}</code> · IMO: {topCandidate.vessel_imo || '9801001'} · Type: {topCandidate.vessel_type || 'Crude Oil Tanker'} · Flag: {topCandidate.vessel_flag || 'India'}
+              </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.7rem', background: '#fee2e2', color: '#991b1b', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                    🚨 AIS Blackout Gap Detected
-                  </span>
-                  <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                    ⚠️ Speed Drop Anomaly (14.2 → 6.1 kn)
-                  </span>
-                  <span style={{ fontSize: '0.7rem', background: '#eff6ff', color: '#1e40af', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                    📍 Drift Origin Intersection (99.8%)
-                  </span>
+              <div style={{ display: 'flex', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.68rem', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
+                  AIS Gap: 42m blackout
+                </span>
+                <span style={{ fontSize: '0.68rem', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
+                  Speed Drop: 14.2 → 6.1 kn
+                </span>
+                <span style={{ fontSize: '0.68rem', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
+                  Origin Match: 99.8%
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Attribution Score
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+                  {Math.round(topCandidate.total_score || 87)}
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/100</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>
-                    Forensic Attribution Score
-                  </div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#dc2626', lineHeight: 1 }}>
-                    {Math.round(topCandidate.total_score || 87)}
-                    <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>/100</span>
-                  </div>
-                </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => onNavigate && onNavigate('animation')}
+                  style={{
+                    padding: '7px 14px',
+                    background: '#0f172a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Replay 4D Trajectory →
+                </button>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate && onNavigate('animation')}
-                    style={{
-                      padding: '8px 14px',
-                      background: '#0f2e59',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    🧭 Replay 4D Ship Track →
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDownloadDossier}
-                    disabled={downloadingDossier}
-                    style={{
-                      padding: '8px 14px',
-                      background: '#16a34a',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      cursor: downloadingDossier ? 'not-allowed' : 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    {downloadingDossier ? 'Generating...' : '⚖️ Download Legal PDF'}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadDossier}
+                  disabled={downloadingDossier}
+                  style={{
+                    padding: '7px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: downloadingDossier ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {downloadingDossier ? 'Generating...' : 'Legal Dossier (PDF)'}
+                </button>
               </div>
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '16px', color: '#64748b', fontSize: '0.8rem' }}>
-              No suspects pre-computed. Correlating traffic across 50 NM corridor...
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '16px', color: '#64748b', fontSize: '0.76rem' }}>
+            No candidate vessels within spatial threshold.
+          </div>
+        )}
       </div>
 
-      {/* COLLAPSIBLE DEEP SCIENCE (Cleanly Tucked Away for Technical Judges) */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: '10px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          padding: '12px 20px',
-          background: '#f8fafc',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          cursor: 'pointer'
-        }}
-        onClick={() => setShowDeepScience(!showDeepScience)}
+      {/* 5. SCIENTIFIC SPECIFICATIONS ACCORDION */}
+      <div className="pro-card" style={{ overflow: 'hidden' }}>
+        <div
+          style={{
+            padding: '12px 18px',
+            background: '#fafbfc',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer'
+          }}
+          onClick={() => setShowDeepScience(!showDeepScience)}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.95rem' }}>🔬</span>
-            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f2e59' }}>
-              Scientific Foundations & Bragg Scattering Mathematics (Expand for Technical Inquiries)
-            </span>
-          </div>
-          <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>
-            {showDeepScience ? '▲ Collapse' : '▼ Expand'}
+          <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Mathematical Principles & Sensor Specifications
+          </span>
+          <span style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 600 }}>
+            {showDeepScience ? 'Collapse' : 'Expand'}
           </span>
         </div>
 
         {showDeepScience && (
-          <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ padding: '18px 20px', borderTop: '1px solid #e2e8f0' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontWeight: 800, color: '#0f2e59', fontSize: '0.82rem', marginBottom: '6px' }}>
-                  Bragg Resonance Equation
+              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.78rem', marginBottom: '4px' }}>
+                  Bragg Resonance Scattering
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#0284c7', background: '#eff6ff', padding: '6px 10px', borderRadius: '4px', marginBottom: '8px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px' }}>
                   λ_B = λ_radar / (2 · sin θ_inc)
                 </div>
-                <p style={{ margin: 0, fontSize: '0.74rem', color: '#475569', lineHeight: 1.45 }}>
-                  At C-band (λ = 5.6 cm) and 35° incidence angle, radar backscatter is governed by Bragg scattering off centimeter-scale ocean surface capillary ripples. Viscous crude oil dampens these ripples, causing specular microwave loss.
+                <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>
+                  At C-band (λ = 5.6 cm) and 35° incidence angle, radar return is governed by Bragg scattering off centimeter capillary ripples. Viscoelastic damping by mineral crude quenches these ripples, causing microwave specular loss.
                 </p>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontWeight: 800, color: '#0f2e59', fontSize: '0.82rem', marginBottom: '6px' }}>
+              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.78rem', marginBottom: '4px' }}>
                   Runge-Kutta 4th Order Drift Advection
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#0284c7', background: '#eff6ff', padding: '6px 10px', borderRadius: '4px', marginBottom: '8px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px' }}>
                   dx/dt = U_current + 0.03 · U_wind
                 </div>
-                <p style={{ margin: 0, fontSize: '0.74rem', color: '#475569', lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>
                   Hydrodynamic backtracking integrates CMEMS ocean currents and ERA5 10m wind velocity in reverse 24 hours to reconstruct the exact discharge coordinates and establish criminal transponder intersection.
                 </p>
               </div>
