@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { spillsAPI } from '../../api/client';
 
 export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
@@ -12,84 +12,13 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
   const [pixelSize, setPixelSize] = useState('10.0');
   const [runAttribution, setRunAttribution] = useState(true);
 
-  // Active Preset Selection
-  const [activePresetId, setActivePresetId] = useState('mumbai');
-
   // Pipeline execution state
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressStage, setProgressStage] = useState(0); // 0: idle, 1: upload/decode, 2: unet, 3: drift, 4: attribution, 5: done
-  const [scanMessage, setScanMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
   const [resultSpill, setResultSpill] = useState(null);
-  const [showAdvancedGeo, setShowAdvancedGeo] = useState(false);
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'raw' | 'mask'
 
   const fileInputRef = useRef(null);
-
-  const PRESET_SCENES = [
-    {
-      id: 'mumbai',
-      title: 'Mumbai High Offshore Fairway',
-      desc: 'Sentinel-1 C-SAR IW · Verified Crude Discharge',
-      thumb: '/samples/sar_sentinel1_mumbai_offshore.png',
-      path: '/samples/sar_sentinel1_mumbai_offshore.png',
-      defaultName: 'SAR-SENTINEL1-MUMBAI-OFFSHORE',
-      lat: '18.8500',
-      lon: '71.9000',
-      region: 'west_coast',
-      severity: 'CRITICAL SLICK',
-      badgeColor: '#dc2626',
-      badgeBg: '#fee2e2',
-      wind: '4.8 m/s',
-      notes: 'Active commercial tanker corridor · 14.8 km² slick',
-    },
-    {
-      id: 'gujarat',
-      title: 'Gulf of Khambhat Industrial Scene',
-      desc: 'Sentinel-1 C-SAR IW · High Tidal Drift Zone',
-      thumb: '/samples/sar_sentinel1_gujarat_gulf.png',
-      path: '/samples/sar_sentinel1_gujarat_gulf.png',
-      defaultName: 'SAR-SENTINEL1-GUJARAT-GULF',
-      lat: '20.6500',
-      lon: '71.2500',
-      region: 'west_coast',
-      severity: 'MODERATE DISCHARGE',
-      badgeColor: '#d97706',
-      badgeBg: '#fef3c7',
-      wind: '5.2 m/s',
-      notes: 'Petrochemical refinery transit corridor · 8.4 km²',
-    },
-    {
-      id: 'geotiff',
-      title: 'Calibrated 16-Bit GeoTIFF Scene',
-      desc: 'Dual-Pol VV+VH · Multi-Spectral Radar Granule',
-      thumb: '/samples/sar_sentinel1_mumbai_offshore.png',
-      path: '/samples/sar_sentinel1_geotiff_sample.tif',
-      defaultName: 'SAR-SENTINEL1-GEOTIFF-16BIT',
-      lat: '18.8980',
-      lon: '71.9360',
-      region: 'west_coast',
-      severity: 'RAW GEOTIFF',
-      badgeColor: '#0284c7',
-      badgeBg: '#e0f2fe',
-      wind: '4.5 m/s',
-      notes: 'Affine georeferenced matrix · Radiometric σ° dB',
-    },
-  ];
-
-  // Auto-load default preset on initial mount if no file selected
-  useEffect(() => {
-    if (!file && !resultSpill) {
-      loadPresetSample(
-        PRESET_SCENES[0].path,
-        PRESET_SCENES[0].defaultName,
-        PRESET_SCENES[0].lat,
-        PRESET_SCENES[0].lon,
-        PRESET_SCENES[0].region,
-        PRESET_SCENES[0].id
-      );
-    }
-  }, []);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -111,7 +40,6 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
   };
 
   const handleFileSelection = (selectedFile) => {
-    setActivePresetId(null);
     setFile(selectedFile);
     setErrorMessage(null);
     setResultSpill(null);
@@ -127,12 +55,11 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
       reader.onload = (e) => setFilePreview(e.target.result);
       reader.readAsDataURL(selectedFile);
     } else {
-      setFilePreview('/samples/sar_sentinel1_mumbai_offshore.png');
+      setFilePreview(null);
     }
   };
 
-  const loadPresetSample = async (samplePath, defaultName, defaultLat, defaultLon, defaultRegion, presetId) => {
-    setActivePresetId(presetId);
+  const loadPresetSample = async (samplePath, defaultName, defaultLat, defaultLon, defaultRegion) => {
     setErrorMessage(null);
     setResultSpill(null);
     setProgressStage(0);
@@ -152,7 +79,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
         reader.onload = (e) => setFilePreview(e.target.result);
         reader.readAsDataURL(sampleFile);
       } else {
-        setFilePreview('/samples/sar_sentinel1_mumbai_offshore.png');
+        setFilePreview(null);
       }
     } catch (err) {
       setErrorMessage(`Failed to load preset sample: ${err.message}`);
@@ -169,7 +96,6 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
     setIsProcessing(true);
     setErrorMessage(null);
     setProgressStage(1);
-    setScanMessage('Calibrating C-Band Backscatter & Affine Georeferencing...');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -180,35 +106,25 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
     formData.append('pixel_size_m', pixelSize || '10.0');
     formData.append('run_attribution', runAttribution ? 'true' : 'false');
 
-    const timer1 = setTimeout(() => {
-      setProgressStage(2);
-      setScanMessage('U-Net Deep Convolutional Inference: Segmenting dark patches...');
-    }, 700);
-    const timer2 = setTimeout(() => {
-      setProgressStage(3);
-      setScanMessage('ERA5 Boundary Wind Gating & 4D Hydrodynamic Drift Advection...');
-    }, 1600);
-    const timer3 = setTimeout(() => {
-      setProgressStage(4);
-      setScanMessage('AIS Kinematics: Correlating transponder tracks & calculating culprit lead...');
-    }, 2600);
+    const stageTimer1 = setTimeout(() => setProgressStage(2), 700);
+    const stageTimer2 = setTimeout(() => setProgressStage(3), 1600);
+    const stageTimer3 = setTimeout(() => setProgressStage(4), 2600);
 
     try {
       const response = await spillsAPI.uploadSAR(formData);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      clearTimeout(stageTimer3);
       setProgressStage(5);
-      setScanMessage('Attribution Complete! Incident registered into Tactical Engine.');
       setResultSpill(response.data);
 
       if (onSpillUploaded) {
         onSpillUploaded(response.data);
       }
     } catch (err) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      clearTimeout(stageTimer3);
       setProgressStage(0);
       let detail = err.response?.data?.detail || err.message || 'Failed to process SAR imagery.';
       if (Array.isArray(detail)) {
@@ -229,849 +145,634 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
     }
   };
 
-  const PIPELINE_STEPS = [
-    { num: 1, name: '1. Radiometric Calibration', short: 'GeoTIFF / 16-bit Normalization' },
-    { num: 2, name: '2. Deep U-Net Segmentation', short: '95.89% Acc · Look-Alike Rejection' },
-    { num: 3, name: '3. ERA5 Wind & 4D Drift', short: 'Runge-Kutta Origin Backtracking' },
-    { num: 4, name: '4. AIS Forensic Attribution', short: 'Kinematics & Multi-Factor Scoring' },
+  const STAGES = [
+    { num: 1, title: 'Radiometric Calibration & Format Parsing', desc: 'Validating SHA-256 integrity, GeoTIFF affine coordinate registration, and 16-bit to 8-bit dynamic range normalization.' },
+    { num: 2, title: 'Deep U-Net Neural Segmentation', desc: 'Executing deep convolutional encoder-decoder inference, surface dark-spot extraction, and natural biogenic look-alike rejection.' },
+    { num: 3, title: 'ERA5 Oceanic Wind Gating & 4D Drift Advection', desc: 'Atmospheric boundary layer validation, 24h backward Runge-Kutta origin backtracking, and 48h forward drift dispersion.' },
+    { num: 4, title: 'AIS Kinematic Correlation & Forensic Attribution', desc: 'Spatio-temporal trajectory intersecting, speed drop detection, AIS blackout gap correlation, and multi-factor suspect ranking.' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       <style>{`
-        @keyframes radarSweep {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        .upload-dropzone {
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes scanBeam {
-          0% { top: 0%; opacity: 0.9; }
-          50% { opacity: 0.6; }
-          100% { top: 96%; opacity: 0.9; }
+        .upload-dropzone:hover {
+          border-color: #0284c7 !important;
+          background-color: #f0f9ff !important;
         }
-        @keyframes pulseRing {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.05); opacity: 0.3; }
-          100% { transform: scale(0.95); opacity: 0.8; }
-        }
-        .preset-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(15, 46, 89, 0.12) !important;
+        .preset-btn:hover {
           border-color: #0f2e59 !important;
-        }
-        .scan-action-btn:hover {
+          background-color: #eff6ff !important;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(15, 46, 89, 0.3) !important;
+        }
+        @keyframes pulseBeam {
+          0% { transform: scaleX(0.2); opacity: 0.6; }
+          50% { transform: scaleX(1); opacity: 1; }
+          100% { transform: scaleX(0.2); opacity: 0.6; }
         }
       `}</style>
 
-      {/* TOP HERO: Mission Ingestion Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0a1628 0%, #0f2e59 100%)',
-        borderRadius: '10px',
-        padding: '20px 24px',
-        color: '#ffffff',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '16px',
-        boxShadow: '0 4px 20px rgba(10, 22, 40, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{
-              background: '#0284c7',
-              color: '#ffffff',
-              fontSize: '0.68rem',
-              fontWeight: 800,
-              padding: '3px 10px',
-              borderRadius: '20px',
-              letterSpacing: '0.6px',
-              textTransform: 'uppercase'
-            }}>
-              🛰️ Sentinel-1 SAR Radar Deck
-            </span>
-            <span style={{ fontSize: '0.74rem', color: '#93c5fd' }}>
-              Dual-Pol VV+VH · C-Band 5.4 GHz · 10m Pixel Resolution
-            </span>
-          </div>
-          <h1 style={{ margin: '6px 0 4px 0', fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
-            Satellite SAR Ingestion & Automated Forensic Pipeline
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', maxWidth: '750px', lineHeight: 1.45 }}>
-            Ingest raw satellite radar scenes to execute the end-to-end detection chain: from <strong>U-Net deep segmentation</strong> to <strong>ERA5 atmospheric wind gating</strong>, <strong>4D Runge-Kutta hydrodynamic backtracking</strong>, and <strong>real-time AIS criminal attribution</strong>.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            padding: '8px 14px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            textAlign: 'right'
-          }}>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
-              AI Model Engine
-            </div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#38bdf8' }}>
-              U-Net 95.89% Acc
-            </div>
-            <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>
-              0.79 mIoU / 0.88 F1
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* STEP 1: Quick 1-Click Judge Demo Scenes */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+      {/* Top Banner Card */}
+      <div className="card" style={{ border: '1px solid #cbd5e1', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: 'linear-gradient(135deg, #0a1628 0%, #0f2e59 100%)', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: '#0f2e59',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.75rem',
-                fontWeight: 800
-              }}>1</span>
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0f2e59' }}>
-                Select a Pre-Verified Satellite Radar Scene (1-Click Judge Demo)
-              </h3>
+              <h2 style={{ margin: 0, color: '#ffffff', fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.2px' }}>
+                Satellite SAR Imagery Ingestion Deck
+              </h2>
+              <span style={{ background: '#0284c7', color: '#ffffff', fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', letterSpacing: '0.5px' }}>
+                REAL MISSION PIPELINE
+              </span>
             </div>
-            <p style={{ margin: '3px 0 0 32px', fontSize: '0.76rem', color: '#64748b' }}>
-              Pick any authentic Sentinel-1 radar pass to immediately inspect dark-spot capillary damping and ship wakes.
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#cbd5e1' }}>
+              Directly ingest synthetic aperture radar datasets across all standard raster and scientific container formats. Automatically runs deep U-Net segmentation, ERA5 wind gating, hydrodynamic drift advection, and real-time AIS attribution.
             </p>
           </div>
-          <span style={{ fontSize: '0.72rem', color: '#0369a1', fontWeight: 700, background: '#e0f2fe', padding: '3px 10px', borderRadius: '12px' }}>
-            ⚡ Instant 1-Click Setup
-          </span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '14px' }}>
-          {PRESET_SCENES.map((scene) => {
-            const isSelected = activePresetId === scene.id;
-            return (
-              <div
-                key={scene.id}
-                className="preset-card"
-                onClick={() => loadPresetSample(scene.path, scene.defaultName, scene.lat, scene.lon, scene.region, scene.id)}
-                style={{
-                  background: isSelected ? '#f0f7ff' : '#ffffff',
-                  border: isSelected ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  boxShadow: isSelected ? '0 4px 14px rgba(2, 132, 199, 0.15)' : '0 1px 3px rgba(0,0,0,0.04)'
-                }}
-              >
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    background: '#0a1628',
-                    position: 'relative',
-                    flexShrink: 0,
-                    border: '1px solid #cbd5e1'
-                  }}>
-                    <img
-                      src={scene.thumb}
-                      alt={scene.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '2px',
-                      right: '3px',
-                      background: 'rgba(0,0,0,0.7)',
-                      color: '#38bdf8',
-                      fontSize: '0.55rem',
-                      padding: '1px 3px',
-                      borderRadius: '2px',
-                      fontWeight: 700
-                    }}>
-                      SAR
-                    </div>
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
-                      <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
-                        {scene.title}
-                      </span>
-                      {isSelected && (
-                        <span style={{
-                          background: '#0284c7',
-                          color: '#fff',
-                          fontSize: '0.6rem',
-                          fontWeight: 800,
-                          padding: '1px 6px',
-                          borderRadius: '10px'
-                        }}>
-                          ACTIVE
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '3px' }}>
-                      {scene.desc}
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px', flexWrap: 'wrap' }}>
-                      <span style={{
-                        fontSize: '0.64rem',
-                        fontWeight: 800,
-                        padding: '1px 6px',
-                        borderRadius: '3px',
-                        background: scene.badgeBg,
-                        color: scene.badgeColor
-                      }}>
-                        {scene.severity}
-                      </span>
-                      <span style={{ fontSize: '0.65rem', color: '#475569', background: '#f1f5f9', padding: '1px 6px', borderRadius: '3px' }}>
-                        💨 {scene.wind}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{
-                  fontSize: '0.7rem',
-                  color: '#475569',
-                  background: isSelected ? '#ffffff' : '#f8fafc',
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span>📍 {scene.lat}°N, {scene.lon}°E</span>
-                  <span style={{ color: '#0369a1', fontWeight: 700 }}>Click to Load →</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* STEP 2: Interactive Radar Scope & File Dropzone */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: '10px',
-        border: '1px solid #cbd5e1',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)'
-      }}>
-        <div style={{
-          padding: '14px 20px',
-          background: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: '#0f2e59',
-              color: '#fff',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 800
-            }}>2</span>
-            <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0f2e59' }}>
-              Interactive Radar Scanner & Image Inspector
-            </h3>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              style={{
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '5px 12px',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#334155',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              📁 Upload Custom File (.tif, .png, .jpg)
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".tif,.tiff,.png,.jpg,.jpeg,.bmp,.webp,.nc,.h5,.hdf5,.zip"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileSelection(e.target.files[0]);
-                }
-              }}
-            />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.68rem', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: '#e0f2fe', fontWeight: 600 }}>
+              GeoTIFF (.tif / .tiff)
+            </span>
+            <span style={{ fontSize: '0.68rem', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: '#e0f2fe', fontWeight: 600 }}>
+              Raster (.png / .jpg / .webp)
+            </span>
+            <span style={{ fontSize: '0.68rem', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: '#e0f2fe', fontWeight: 600 }}>
+              Scientific (.nc / .h5)
+            </span>
+            <span style={{ fontSize: '0.68rem', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: '#e0f2fe', fontWeight: 600 }}>
+              Granule (.zip)
+            </span>
           </div>
         </div>
 
         <div style={{ padding: '20px' }}>
-          {/* Main Visual Display: Radar Scope with Image & Live Scanning Animation */}
-          <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            style={{
-              borderRadius: '8px',
-              overflow: 'hidden',
-              background: '#07101e',
-              border: dragActive ? '2px dashed #38bdf8' : '1px solid #1e293b',
-              position: 'relative',
-              minHeight: '280px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.7)'
-            }}
-          >
-            {/* High-tech Radar Grid Background Overlay */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-              pointerEvents: 'none',
-              zIndex: 1
-            }} />
 
-            {/* Radar Scope Target Circles */}
-            <div style={{
-              position: 'absolute',
-              width: '260px',
-              height: '260px',
-              borderRadius: '50%',
-              border: '1px solid rgba(56, 189, 248, 0.15)',
-              pointerEvents: 'none',
-              zIndex: 1
-            }} />
-            <div style={{
-              position: 'absolute',
-              width: '140px',
-              height: '140px',
-              borderRadius: '50%',
-              border: '1px solid rgba(56, 189, 248, 0.2)',
-              pointerEvents: 'none',
-              zIndex: 1
-            }} />
+          {/* PROMINENT UPLOAD OPTION / DRAG & DROP CONTAINER */}
+          <div style={{ marginBottom: '18px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f2e59' }}>
+                📁 Upload Satellite SAR Imagery File:
+              </span>
+              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                Click to browse or drag & drop directly
+              </span>
+            </div>
 
-            {/* If file loaded: display image with radar treatment */}
-            {file && filePreview ? (
-              <div style={{ position: 'relative', width: '100%', height: '320px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                <img
-                  src={filePreview}
-                  alt="Loaded SAR Satellite Pass"
-                  style={{
-                    maxHeight: '100%',
-                    maxWidth: '100%',
-                    objectFit: 'contain',
-                    filter: isProcessing ? 'contrast(120%) brightness(90%)' : 'none',
-                    transition: 'all 0.3s ease',
-                    zIndex: 2
-                  }}
-                />
+            <div
+              className="upload-dropzone"
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              style={{
+                border: dragActive ? '2px dashed #0284c7' : (file ? '2px solid #0284c7' : '2px dashed #cbd5e1'),
+                borderRadius: '10px',
+                padding: file ? '18px 20px' : '32px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: dragActive ? '#f0f9ff' : (file ? '#f8fafc' : '#ffffff'),
+                boxShadow: dragActive ? '0 0 15px rgba(2, 132, 199, 0.15)' : 'none',
+                position: 'relative',
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".tif,.tiff,.png,.jpg,.jpeg,.bmp,.webp,.nc,.h5,.hdf5,.zip"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileSelection(e.target.files[0]);
+                  }
+                }}
+              />
 
-                {/* Animated Scan Beam during processing */}
-                {isProcessing && (
-                  <div style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    height: '4px',
-                    background: 'linear-gradient(90deg, transparent 0%, #38bdf8 50%, transparent 100%)',
-                    boxShadow: '0 0 15px #38bdf8, 0 0 30px #0284c7',
-                    animation: 'scanBeam 1.6s ease-in-out infinite',
-                    zIndex: 4
-                  }} />
-                )}
+              {file ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                  {filePreview ? (
+                    <img
+                      src={filePreview}
+                      alt="SAR Satellite Preview"
+                      style={{
+                        width: '85px',
+                        height: '85px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '2px solid #0284c7',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '85px',
+                      height: '85px',
+                      borderRadius: '8px',
+                      background: '#0a1628',
+                      color: '#38bdf8',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      border: '1px solid #1e293b'
+                    }}>
+                      <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>🛰️</span>
+                      GEOTIFF
+                    </div>
+                  )}
 
-                {/* Radar Rotating Sweep Overlay */}
-                {isProcessing && (
-                  <div style={{
-                    position: 'absolute',
-                    width: '320px',
-                    height: '320px',
-                    borderRadius: '50%',
-                    background: 'conic-gradient(from 0deg, rgba(56, 189, 248, 0.3) 0deg, transparent 60deg)',
-                    animation: 'radarSweep 2.5s linear infinite',
-                    pointerEvents: 'none',
-                    zIndex: 3
-                  }} />
-                )}
+                  <div style={{ textAlign: 'left', minWidth: '240px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0f2e59' }}>
+                        {file.name}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                        ✓ FILE READY
+                      </span>
+                    </div>
 
-                {/* Telemetry Corner Overlays */}
-                <div style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  background: 'rgba(10, 22, 40, 0.85)',
-                  backdropFilter: 'blur(4px)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  color: '#ffffff',
-                  fontSize: '0.72rem',
-                  zIndex: 5
-                }}>
-                  <div style={{ color: '#38bdf8', fontWeight: 800 }}>FILE: {file.name}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.65rem' }}>
-                    {(file.size / 1024).toFixed(1)} KB · WGS84: {lat}°N, {lon}°E
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px' }}>
+                      Size: <strong>{(file.size / 1024).toFixed(1)} KB</strong> · Format: {file.type || 'Scientific Radar Binary'}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileInputRef.current && fileInputRef.current.click();
+                        }}
+                        style={{
+                          padding: '4px 10px',
+                          background: '#0284c7',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Choose Different File
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  background: isProcessing ? 'rgba(2, 132, 199, 0.9)' : 'rgba(22, 163, 74, 0.9)',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  color: '#ffffff',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.5px',
-                  zIndex: 5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span style={{
-                    width: '7px',
-                    height: '7px',
+              ) : (
+                <div>
+                  <div style={{
+                    width: '54px',
+                    height: '54px',
                     borderRadius: '50%',
-                    background: '#ffffff',
-                    display: 'inline-block',
-                    animation: isProcessing ? 'pulseRing 1s infinite' : 'none'
-                  }} />
-                  {isProcessing ? 'SCANNING ACTIVE' : 'FILE MOUNTED'}
+                    background: '#f0f9ff',
+                    border: '1.5px solid #bae6fd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px auto',
+                    color: '#0284c7',
+                    fontSize: '1.5rem'
+                  }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                  </div>
+
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f2e59' }}>
+                    Click to Browse or Drag & Drop Satellite SAR Imagery Here
+                  </div>
+
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                    Supports GeoTIFF (.tif, .tiff), standard rasters (.png, .jpg), and scientific NetCDF/HDF5 granules
+                  </div>
+
+                  <button
+                    type="button"
+                    style={{
+                      marginTop: '12px',
+                      padding: '7px 16px',
+                      background: '#0f2e59',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(15, 46, 89, 0.2)'
+                    }}
+                  >
+                    Browse Files on Device
+                  </button>
                 </div>
-              </div>
-            ) : (
-              <div style={{ padding: '40px 20px', textAlign: 'center', zIndex: 2 }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'rgba(56, 189, 248, 0.1)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 14px auto',
-                  color: '#38bdf8',
-                  fontSize: '1.4rem'
-                }}>
-                  📡
-                </div>
-                <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.98rem' }}>
-                  Drag & Drop Real SAR Imagery or Select a Preset Above
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginTop: '4px', maxWidth: '420px' }}>
-                  Supports GeoTIFF (.tif, .tiff), standard rasters (.png, .jpg), and scientific NetCDF/HDF5 formats.
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Real-Time Processing HUD (when active) */}
-          {isProcessing && (
-            <div style={{
-              marginTop: '16px',
-              background: '#0a1628',
-              borderRadius: '8px',
-              padding: '16px 20px',
-              border: '1px solid #1e3a8a',
-              color: '#ffffff'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: '#38bdf8',
-                    boxShadow: '0 0 10px #38bdf8'
-                  }} />
-                  <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#38bdf8' }}>
-                    {scanMessage}
+          {/* Quick Preset Samples for 1-Click Testing */}
+          <div style={{ marginBottom: '18px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#0f2e59' }}>
+                ⚡ Or Select a Pre-Verified Satellite Scene (1-Click Judge Demo):
+              </span>
+              <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                Automatically mounts imagery & georeferenced coordinates
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
+              <button
+                type="button"
+                className="preset-btn"
+                onClick={() => loadPresetSample('/samples/sar_sentinel1_mumbai_offshore.png', 'SAR-SENTINEL1-MUMBAI-OFFSHORE', '18.8500', '71.9000', 'west_coast')}
+                style={{
+                  padding: '9px 12px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#0f2e59' }}>
+                    Mumbai High Offshore
+                  </span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#fee2e2', color: '#991b1b', padding: '1px 5px', borderRadius: '3px' }}>
+                    CRITICAL
                   </span>
                 </div>
-                <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 700 }}>
-                  Stage {progressStage} / 4
-                </span>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '3px' }}>
+                  Sentinel-1 C-SAR · 18.85°N, 71.90°E
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="preset-btn"
+                onClick={() => loadPresetSample('/samples/sar_sentinel1_gujarat_gulf.png', 'SAR-SENTINEL1-GUJARAT-GULF', '20.6500', '71.2500', 'west_coast')}
+                style={{
+                  padding: '9px 12px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#0f2e59' }}>
+                    Gulf of Khambhat Industrial
+                  </span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '3px' }}>
+                    MEDIUM
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '3px' }}>
+                  Petrochemical Corridor · 20.65°N, 71.25°E
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="preset-btn"
+                onClick={() => loadPresetSample('/samples/sar_sentinel1_geotiff_sample.tif', 'SAR-SENTINEL1-GEOTIFF-16BIT', '18.8980', '71.9360', 'west_coast')}
+                style={{
+                  padding: '9px 12px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#0f2e59' }}>
+                    Calibrated 16-Bit GeoTIFF
+                  </span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '1px 5px', borderRadius: '3px' }}>
+                    GEOTIFF
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '3px' }}>
+                  Affine Georeferenced Product
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Telemetry Input Parameters Form */}
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Mission / Spill Identifier
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. SAR-REAL-MISSION-01"
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '5px' }}
+                />
               </div>
 
-              {/* Glowing Progress Bar */}
-              <div style={{ width: '100%', height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden', marginBottom: '14px' }}>
-                <div style={{
-                  width: `${(progressStage / 4) * 100}%`,
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #0284c7 0%, #38bdf8 100%)',
-                  borderRadius: '4px',
-                  boxShadow: '0 0 12px #38bdf8',
-                  transition: 'width 0.4s ease'
-                }} />
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Maritime Sector / Jurisdiction
+                </label>
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '5px', background: '#ffffff' }}
+                >
+                  <option value="west_coast">West Coast (Mumbai / Gujarat / Konkan)</option>
+                  <option value="east_coast">East Coast (Chennai / Vizag / Bengal)</option>
+                  <option value="andaman">Andaman & Nicobar Islands</option>
+                  <option value="lakshadweep">Lakshadweep / Malabar Coast</option>
+                </select>
               </div>
 
-              {/* Pipeline Stage Pills */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
-                {PIPELINE_STEPS.map((s) => {
-                  const isDone = progressStage > s.num;
-                  const isCurrent = progressStage === s.num;
-                  return (
-                    <div
-                      key={s.num}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        background: isCurrent ? 'rgba(56, 189, 248, 0.15)' : (isDone ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255,255,255,0.03)'),
-                        border: isCurrent ? '1px solid #38bdf8' : (isDone ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.08)'),
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isCurrent ? '#38bdf8' : (isDone ? '#4ade80' : '#94a3b8') }}>
-                          {s.name}
-                        </span>
-                        <span style={{ fontSize: '0.62rem', fontWeight: 800 }}>
-                          {isDone ? '✓' : (isCurrent ? '⚡' : '•')}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '2px' }}>
-                        {s.short}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Centroid Latitude (°N)
+                </label>
+                <input
+                  type="text"
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="18.8500"
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Centroid Longitude (°E)
+                </label>
+                <input
+                  type="text"
+                  value={lon}
+                  onChange={(e) => setLon(e.target.value)}
+                  placeholder="71.9000"
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  SAR Pixel Pitch (Meters)
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={pixelSize}
+                  onChange={(e) => setPixelSize(e.target.value)}
+                  placeholder="10.0"
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '5px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', paddingTop: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 700, color: '#1e293b' }}>
+                  <input
+                    type="checkbox"
+                    checked={runAttribution}
+                    onChange={(e) => setRunAttribution(e.target.checked)}
+                    style={{ width: '16px', height: '16px', accentColor: '#0f2e59' }}
+                  />
+                  Run Automated AIS Attribution
+                </label>
               </div>
             </div>
-          )}
 
-          {/* Geolocation & Mission Metadata (Collapsible for Clean UX) */}
-          <div style={{ marginTop: '16px' }}>
-            <button
-              type="button"
-              onClick={() => setShowAdvancedGeo(!showAdvancedGeo)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '4px 0',
-                fontSize: '0.76rem',
-                color: '#0284c7',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <span>{showAdvancedGeo ? '▼ Hide' : '▶ Show'} Geolocation Coordinates & Sector Settings (Auto-configured)</span>
-            </button>
-
-            {showAdvancedGeo && (
-              <div style={{
-                marginTop: '10px',
-                padding: '14px',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '12px'
-              }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Mission Name
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Maritime Sector
-                  </label>
-                  <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
-                  >
-                    <option value="west_coast">West Coast (Mumbai / Gujarat)</option>
-                    <option value="east_coast">East Coast (Chennai / Vizag)</option>
-                    <option value="andaman">Andaman & Nicobar</option>
-                    <option value="lakshadweep">Lakshadweep / Malabar</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Latitude (°N)
-                  </label>
-                  <input
-                    type="text"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Longitude (°E)
-                  </label>
-                  <input
-                    type="text"
-                    value={lon}
-                    onChange={(e) => setLon(e.target.value)}
-                    style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                  />
-                </div>
+            {/* Error Display */}
+            {errorMessage && (
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderLeft: '4px solid #dc2626', borderRadius: '4px', fontSize: '0.75rem', color: '#991b1b' }}>
+                {errorMessage}
               </div>
             )}
-          </div>
 
-          {/* Error Message */}
-          {errorMessage && (
-            <div style={{
-              marginTop: '14px',
-              padding: '12px 16px',
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderLeft: '4px solid #dc2626',
-              borderRadius: '6px',
-              fontSize: '0.78rem',
-              color: '#991b1b'
-            }}>
-              {errorMessage}
+            {/* Submit Action */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="submit"
+                disabled={isProcessing || !file}
+                style={{
+                  padding: '11px 26px',
+                  background: isProcessing || !file ? '#94a3b8' : 'linear-gradient(135deg, #0f2e59 0%, #0284c7 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: isProcessing || !file ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: isProcessing || !file ? 'none' : '0 2px 8px rgba(15, 46, 89, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {isProcessing ? 'Processing Full Pipeline...' : '⚡ Run Real ML & Forensic Workflow →'}
+              </button>
             </div>
-          )}
-
-          {/* MAIN ACTION BAR: Big Punchy Scan Button */}
-          <div style={{
-            marginTop: '18px',
-            paddingTop: '16px',
-            borderTop: '1px solid #e2e8f0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#334155' }}>
-                <input
-                  type="checkbox"
-                  checked={runAttribution}
-                  onChange={(e) => setRunAttribution(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#0f2e59' }}
-                />
-                Auto-correlate AIS Vessel Transponders (Legal Forensics)
-              </label>
-            </div>
-
-            <button
-              type="button"
-              className="scan-action-btn"
-              disabled={isProcessing || !file}
-              onClick={handleSubmit}
-              style={{
-                padding: '12px 28px',
-                background: isProcessing || !file ? '#94a3b8' : 'linear-gradient(135deg, #0f2e59 0%, #0284c7 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.88rem',
-                fontWeight: 800,
-                cursor: isProcessing || !file ? 'not-allowed' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                boxShadow: isProcessing || !file ? 'none' : '0 4px 14px rgba(2, 132, 199, 0.35)',
-                transition: 'all 0.2s ease',
-                letterSpacing: '0.3px'
-              }}
-            >
-              {isProcessing ? (
-                <>
-                  <span style={{
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderTop: '2px solid #ffffff',
-                    borderRadius: '50%',
-                    animation: 'radarSweep 0.8s linear infinite',
-                    display: 'inline-block'
-                  }} />
-                  Analyzing Radar Backscatter...
-                </>
-              ) : (
-                <>
-                  ⚡ Run U-Net Detection & Forensic Attribution →
-                </>
-              )}
-            </button>
-          </div>
+          </form>
         </div>
       </div>
 
-      {/* STEP 3: Live Detection Output & Direct Bridge to Telemetry */}
+      {/* Real-time ML Pipeline Progress Stepper */}
+      {(isProcessing || progressStage > 0) && (
+        <div className="card" style={{ border: '1px solid #cbd5e1', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 18px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, color: '#0f2e59', fontSize: '0.88rem', fontWeight: 800 }}>
+              Live Operational Workflow Execution Progress
+            </h3>
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 800,
+              padding: '2px 8px',
+              borderRadius: '4px',
+              background: progressStage === 5 ? '#dcfce7' : '#eff6ff',
+              color: progressStage === 5 ? '#166534' : '#1e40af',
+            }}>
+              {progressStage === 5 ? 'PIPELINE COMPLETE' : `EXECUTING STAGE ${progressStage} OF 4`}
+            </span>
+          </div>
+
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
+              {STAGES.map((s) => {
+                const isCurrent = progressStage === s.num;
+                const isDone = progressStage > s.num || progressStage === 5;
+
+                let borderCol = '#cbd5e1';
+                let bgCol = '#ffffff';
+                let tagText = 'PENDING';
+                let tagBg = '#f1f5f9';
+                let tagColor = '#64748b';
+
+                if (isCurrent) {
+                  borderCol = '#0284c7';
+                  bgCol = '#eff6ff';
+                  tagText = 'IN PROGRESS';
+                  tagBg = '#dbeafe';
+                  tagColor = '#1e40af';
+                } else if (isDone) {
+                  borderCol = '#16a34a';
+                  bgCol = '#f0fdf4';
+                  tagText = 'COMPLETED';
+                  tagBg = '#dcfce7';
+                  tagColor = '#166534';
+                }
+
+                return (
+                  <div
+                    key={s.num}
+                    style={{
+                      border: `1.5px solid ${borderCol}`,
+                      borderRadius: '6px',
+                      padding: '12px 14px',
+                      background: bgCol,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f2e59' }}>
+                        Stage {s.num}
+                      </span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', background: tagBg, color: tagColor }}>
+                        {tagText}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#1e293b', marginBottom: '4px' }}>
+                      {s.title}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.4 }}>
+                      {s.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completion & Isolated Output Summary */}
       {resultSpill && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
-          border: '2px solid #22c55e',
-          borderRadius: '10px',
-          padding: '20px 24px',
-          boxShadow: '0 4px 16px rgba(34, 197, 94, 0.15)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                background: '#16a34a',
-                color: '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 900,
-                padding: '4px 10px',
-                borderRadius: '20px',
-                letterSpacing: '0.5px'
-              }}>
-                ✓ DETECTION VERIFIED
-              </span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#14532d' }}>
-                  Mission Registered: {resultSpill.name} (#{resultSpill.id})
-                </h3>
-                <div style={{ fontSize: '0.74rem', color: '#15803d', marginTop: '2px' }}>
-                  Real SAR telemetry extracted · Ready for tactical interception
-                </div>
+        <div className="card" style={{ border: '1px solid #16a34a', borderLeft: '6px solid #16a34a', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)', background: '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f0fdf4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#166534' }}>
+                  SAR INGESTION & FORENSIC ATTRIBUTION SUCCESSFUL
+                </span>
+                <span style={{ background: '#16a34a', color: '#ffffff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '3px' }}>
+                  REAL PROVENANCE ACTIVE
+                </span>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#15803d', marginTop: '2px' }}>
+                Operational Console has automatically switched to <strong>Uploaded Incident Only Mode</strong>.
               </div>
             </div>
-
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 type="button"
                 onClick={() => onNavigate && onNavigate('telemetry')}
                 style={{
-                  padding: '9px 18px',
+                  padding: '7px 16px',
                   background: '#0f2e59',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
+                  borderRadius: '5px',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(15, 46, 89, 0.25)'
+                  gap: '6px'
                 }}
               >
-                📊 Inspect Telemetry & Confidence →
+                📊 View Telemetry & Confidence →
               </button>
               <button
                 type="button"
                 onClick={() => onNavigate && onNavigate('map')}
                 style={{
-                  padding: '9px 16px',
-                  background: '#ffffff',
-                  color: '#0f2e59',
-                  border: '1.5px solid #0f2e59',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
+                  padding: '7px 14px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
               >
-                🗺️ Tactical Map
+                Tactical Map →
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('suspects')}
+                style={{
+                  padding: '7px 14px',
+                  background: '#ffffff',
+                  color: '#0f2e59',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '5px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Correlated Suspects →
               </button>
             </div>
           </div>
 
-          {/* Quick Metrics Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-            <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700, textTransform: 'uppercase' }}>
-                Oil Surface Extent
+          <div style={{ padding: '18px 20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '10px 14px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Mission Identifier</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f2e59', marginTop: '2px' }}>{resultSpill.name}</div>
+                <div style={{ fontSize: '0.68rem', color: '#0369a1', marginTop: '2px' }}>ID: #{resultSpill.id} · Real Provenance</div>
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
-                {resultSpill.area_sq_km?.toFixed(2) || '14.80'} km²
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                Perimeter: {resultSpill.perimeter_km?.toFixed(1) || '18.4'} km
-              </div>
-            </div>
 
-            <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700, textTransform: 'uppercase' }}>
-                Neural Confidence
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '10px 14px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Extracted Extent</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f2e59', marginTop: '2px' }}>{resultSpill.area_sq_km?.toFixed(2)} km²</div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px' }}>Perimeter: {resultSpill.perimeter_km?.toFixed(1)} km</div>
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a', marginTop: '2px' }}>
-                {Math.round(((resultSpill.confidence_score != null ? resultSpill.confidence_score : resultSpill.model_confidence?.oil) ?? 0.89) * 100)}%
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 600 }}>
-                High-viscosity hydrocarbon
-              </div>
-            </div>
 
-            <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700, textTransform: 'uppercase' }}>
-                Coordinates
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '10px 14px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                  {resultSpill.validation_status === 'lookalike' ? 'Look-Alike Confidence' : 'Model Confidence'}
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: resultSpill.validation_status === 'lookalike' ? '#d97706' : '#16a34a', marginTop: '2px' }}>
+                  {Math.round(((resultSpill.confidence_score != null ? resultSpill.confidence_score : (resultSpill.validation_status === 'lookalike' ? resultSpill.model_confidence?.lookalike : resultSpill.model_confidence?.oil)) ?? 0.88) * 100)}%
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px' }}>
+                  {resultSpill.validation_status === 'lookalike' ? 'False Alarm Suppressed' : 'U-Net + Physics Gate'}
+                </div>
               </div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', marginTop: '4px', fontFamily: 'monospace' }}>
-                {resultSpill.centroid_lat?.toFixed(4)}°N, {resultSpill.centroid_lon?.toFixed(4)}°E
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                Indian Sovereign EEZ
-              </div>
-            </div>
 
-            <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700, textTransform: 'uppercase' }}>
-                Automated Action
-              </div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>
-                AIS Match Linked
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                Correlated with AIS traffic
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '10px 14px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Centroid Coordinates</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f2e59', marginTop: '2px' }}>
+                  {resultSpill.centroid_lat?.toFixed(4)}°N, {resultSpill.centroid_lon?.toFixed(4)}°E
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px' }}>Sector: {resultSpill.region || 'West Coast'}</div>
               </div>
             </div>
           </div>
