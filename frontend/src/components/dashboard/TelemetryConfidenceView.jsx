@@ -151,7 +151,7 @@ export default function TelemetryConfidenceView({
   const lookalikeSpills = spills.filter(s => s.validation_status === 'lookalike');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
       <style>{`
         .pro-card {
           background: #ffffff;
@@ -170,10 +170,69 @@ export default function TelemetryConfidenceView({
           border-color: #0f172a !important;
           background-color: #f8fafc !important;
         }
+
+        /* Responsive Breakpoints for Mobile */
+        @media (max-width: 768px) {
+          .telemetry-card {
+            padding: 16px 14px !important;
+          }
+          .telemetry-scenario-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .telemetry-scenario-bar > div:first-child {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .telemetry-scenario-bar button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .telemetry-hud {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .telemetry-hud-left {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+          }
+          .telemetry-probs-box {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+          .telemetry-dials-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .telemetry-suspect-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .telemetry-suspect-actions {
+            align-items: stretch !important;
+            width: 100% !important;
+          }
+          .telemetry-suspect-actions > div:first-child {
+            text-align: left !important;
+            display: flex !important;
+            justifyContent: space-between !important;
+            align-items: center !important;
+          }
+          .telemetry-suspect-actions > div:last-child {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          .telemetry-suspect-actions button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
       `}</style>
 
       {/* 1. SCENARIO / INCIDENT SELECTOR BAR */}
-      <div className="pro-card" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="pro-card telemetry-card telemetry-scenario-bar" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Operational Context:
@@ -228,7 +287,7 @@ export default function TelemetryConfidenceView({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: 'auto' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Select Mission:</span>
           <select
             value={activeSpill.id}
@@ -244,7 +303,8 @@ export default function TelemetryConfidenceView({
               background: '#ffffff',
               border: '1px solid #cbd5e1',
               borderRadius: '4px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              maxWidth: '100%'
             }}
           >
             {spills.map(s => (
@@ -257,10 +317,10 @@ export default function TelemetryConfidenceView({
       </div>
 
       {/* 2. EXECUTIVE DECISION HUD */}
-      <div className="pro-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
+      <div className="pro-card telemetry-card telemetry-hud" style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
 
-        {/* Circular Gauge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        {/* Circular Gauge and Text */}
+        <div className="telemetry-hud-left" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: 0 }}>
             <svg width="92" height="92" viewBox="0 0 92 92">
               <circle
@@ -305,7 +365,7 @@ export default function TelemetryConfidenceView({
           </div>
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{
                 fontSize: '0.65rem',
                 fontWeight: 700,
@@ -343,7 +403,7 @@ export default function TelemetryConfidenceView({
         </div>
 
         {/* Softmax Probability Distribution */}
-        <div style={{
+        <div className="telemetry-probs-box" style={{
           background: '#f8fafc',
           border: '1px solid #e2e8f0',
           borderRadius: '6px',
@@ -390,7 +450,7 @@ export default function TelemetryConfidenceView({
 
       {/* 3. THE 4 CORE PHYSICS INSTRUMENTS */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '4px' }}>
           <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Radar Telemetry & Marine Physical Metrics
           </h3>
@@ -399,7 +459,7 @@ export default function TelemetryConfidenceView({
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+        <div className="telemetry-dials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
 
           {/* Instrument 1: Backscatter Contrast */}
           <div className="pro-card" style={{ padding: '16px' }}>
@@ -611,8 +671,8 @@ export default function TelemetryConfidenceView({
       </div>
 
       {/* 4. FORENSIC VESSEL ATTRIBUTION */}
-      <div className="pro-card" style={{ padding: '20px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+      <div className="pro-card telemetry-card" style={{ padding: '20px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
               AIS Forensic Attribution
@@ -636,7 +696,7 @@ export default function TelemetryConfidenceView({
 
         {isLookalike ? (
           <div style={{ background: '#fafbfc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', flexShrink: 0 }}>
               ✓
             </div>
             <div>
@@ -649,9 +709,9 @@ export default function TelemetryConfidenceView({
             </div>
           </div>
         ) : topCandidate ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          <div className="telemetry-suspect-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
                   {topCandidate.vessel_name}
                 </span>
@@ -676,7 +736,7 @@ export default function TelemetryConfidenceView({
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+            <div className="telemetry-suspect-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
                   Attribution Score
@@ -687,7 +747,7 @@ export default function TelemetryConfidenceView({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => onNavigate && onNavigate('animation')}
@@ -755,12 +815,12 @@ export default function TelemetryConfidenceView({
 
         {showDeepScience && (
           <div style={{ padding: '18px 20px', borderTop: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
               <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.78rem', marginBottom: '4px' }}>
                   Bragg Resonance Scattering
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px', overflowX: 'auto' }}>
                   λ_B = λ_radar / (2 · sin θ_inc)
                 </div>
                 <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>
@@ -772,7 +832,7 @@ export default function TelemetryConfidenceView({
                 <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.78rem', marginBottom: '4px' }}>
                   Runge-Kutta 4th Order Drift Advection
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#0f172a', background: '#ffffff', padding: '4px 8px', borderRadius: '3px', border: '1px solid #e2e8f0', marginBottom: '6px', overflowX: 'auto' }}>
                   dx/dt = U_current + 0.03 · U_wind
                 </div>
                 <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>

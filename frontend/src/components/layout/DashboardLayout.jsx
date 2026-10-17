@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -45,11 +46,19 @@ const TAB_ICONS = {
       <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   ),
+  telemetry: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
 };
 
 export default function DashboardLayout({ children, title, navItems = [] }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -69,22 +78,73 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
   });
 
   return (
-    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
+    <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', position: 'relative' }}>
+      <style>{`
+        .mobile-menu-toggle {
+          display: none;
+        }
+        @media (max-width: 1024px) {
+          .mobile-menu-toggle {
+            display: inline-flex !important;
+          }
+          .dashboard-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: -280px !important;
+            width: 260px !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            transition: left 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-shadow: none;
+          }
+          .dashboard-sidebar.is-open {
+            left: 0 !important;
+            box-shadow: 0 0 30px rgba(15, 23, 42, 0.25) !important;
+          }
+          .dashboard-header {
+            padding: 0 14px !important;
+          }
+          .dashboard-main-content {
+            padding: 14px 12px !important;
+          }
+          .header-region-badge {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* MOBILE BACKDROP OVERLAY */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 999,
+          }}
+        />
+      )}
+
       {/* LEFT SIDEBAR NAVIGATION */}
-      <aside style={{
-        width: '235px',
-        flexShrink: 0,
-        background: '#ffffff',
-        borderRight: '1px solid #cbd5e1',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        zIndex: 100,
-        boxShadow: '1px 0 3px rgba(15, 23, 42, 0.04)',
-      }}>
+      <aside
+        className={`dashboard-sidebar ${sidebarOpen ? 'is-open' : ''}`}
+        style={{
+          width: '235px',
+          flexShrink: 0,
+          background: '#ffffff',
+          borderRight: '1px solid #cbd5e1',
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          zIndex: 100,
+          boxShadow: '1px 0 3px rgba(15, 23, 42, 0.04)',
+        }}
+      >
         <div>
           {/* Sidebar Top: Logo & Branding */}
           <div style={{
@@ -92,50 +152,74 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
             borderBottom: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            justifyContent: 'space-between',
           }}>
-            <img
-              src="/sarvas_logo.png"
-              alt="SARVAS"
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '1.5px solid #0f2e59',
-              }}
-            />
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f2e59', letterSpacing: '0.5px' }}>
-                  SARVAS
-                </span>
-                <span style={{
-                  background: '#eff6ff',
-                  color: '#1e40af',
-                  border: '1px solid #bfdbfe',
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                }}>
-                  NTRO
-                </span>
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '1px' }}>
-                Coast Guard Operations
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src="/sarvas_logo.png"
+                alt="SARVAS"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1.5px solid #0f2e59',
+                }}
+              />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f2e59', letterSpacing: '0.5px' }}>
+                    SARVAS
+                  </span>
+                  <span style={{
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #bfdbfe',
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: '3px',
+                  }}>
+                    NTRO
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '1px' }}>
+                  Coast Guard Operations
+                </div>
               </div>
             </div>
+
+            {/* Mobile Close Button */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="mobile-menu-toggle"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#64748b',
+                padding: '4px',
+              }}
+              title="Close Navigation"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
 
-          {/* Navigation Links (Vertical Left List) */}
-          <nav style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          {/* Navigation Links */}
+          <nav style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '3px', overflowY: 'auto', maxHeight: 'calc(100vh - 170px)' }}>
             {navItems.map((item) => {
               const icon = TAB_ICONS[item.id] || TAB_ICONS.overview;
               return (
                 <button
                   key={item.id}
-                  onClick={item.onClick}
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    if (item.onClick) item.onClick();
+                  }}
                   style={{
                     width: '100%',
                     padding: '9px 12px',
@@ -251,44 +335,75 @@ export default function DashboardLayout({ children, title, navItems = [] }) {
 
       {/* MAIN CONTENT AREA */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* Simple Top Header Bar (Single Slim Line) */}
-        <header style={{
-          height: '48px',
-          background: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 90,
-          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
-        }}>
+        {/* Simple Top Header Bar */}
+        <header
+          className="dashboard-header"
+          style={{
+            height: '48px',
+            background: '#ffffff',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '0 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'sticky',
+            top: 0,
+            zIndex: 90,
+            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              className="mobile-menu-toggle"
+              onClick={() => setSidebarOpen(true)}
+              style={{
+                background: 'none',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#0f2e59',
+                padding: '4px 6px',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              aria-label="Open Navigation Menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+
             <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f2e59' }}>
               {title || 'Coast Guard Operations'}
             </span>
-            <span style={{
-              background: '#f1f5f9',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
-              fontSize: '0.68rem',
-              fontWeight: 600,
-              padding: '1px 8px',
-              borderRadius: '4px',
-            }}>
+
+            <span
+              className="header-region-badge"
+              style={{
+                background: '#f1f5f9',
+                color: '#475569',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                padding: '1px 8px',
+                borderRadius: '4px',
+              }}
+            >
               Active Sector: {formattedRegion}
             </span>
           </div>
 
-          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+          <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 500 }}>
             {todayStr}
           </div>
         </header>
 
         {/* Page Content Body */}
-        <main className="main-content" style={{ flex: 1, padding: '20px 24px' }}>
+        <main className="dashboard-main-content" style={{ flex: 1, padding: '20px 24px', overflowX: 'hidden' }}>
           {children}
         </main>
       </div>

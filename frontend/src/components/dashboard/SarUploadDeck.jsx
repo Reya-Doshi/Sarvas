@@ -153,7 +153,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
       <style>{`
         .pro-dropzone {
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -190,23 +190,66 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(0.95); }
         }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+          .deck-header {
+            padding: 16px 14px !important;
+          }
+          .deck-card {
+            padding: 16px 14px !important;
+          }
+          .deck-presets-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .deck-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .deck-stepper-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .deck-results-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .pro-dropzone {
+            padding: 18px 12px !important;
+          }
+          .dropzone-file-preview {
+            flex-direction: column !important;
+            text-align: center !important;
+          }
+          .dropzone-file-preview > div {
+            text-align: center !important;
+          }
+          .deck-action-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .deck-action-row button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
       `}</style>
 
       {/* TOP HEADER: Professional Intel Terminal Header */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        padding: '20px 24px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
+      <div
+        className="deck-header"
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '20px 24px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -264,16 +307,19 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
       </div>
 
       {/* CORE WORKSPACE: Main Card */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        padding: '24px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '22px'
-      }}>
+      <div
+        className="deck-card"
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '24px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '22px'
+        }}
+      >
 
         {/* 1. FILE UPLOAD DROPZONE */}
         <div>
@@ -316,7 +362,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
             />
 
             {file ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap' }}>
+              <div className="dropzone-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap' }}>
                 {filePreview ? (
                   <img
                     src={filePreview}
@@ -353,9 +399,9 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
                   </div>
                 )}
 
-                <div style={{ textAlign: 'left', minWidth: '220px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+                <div style={{ textAlign: 'left', minWidth: 'min(100%, 220px)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', wordBreak: 'break-all' }}>
                       {file.name}
                     </span>
                     <span style={{ fontSize: '0.64rem', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '1px 6px', borderRadius: '3px', fontWeight: 700 }}>
@@ -424,7 +470,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
 
         {/* 2. PRE-VERIFIED PRESET SCENES */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
             <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Standard Operational Scenes
             </span>
@@ -433,7 +479,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+          <div className="deck-presets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
             <button
               type="button"
               className="pro-preset-chip"
@@ -525,13 +571,16 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
 
         {/* 3. MISSION PARAMETERS FORM */}
         <form onSubmit={handleSubmit}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '14px',
-            paddingTop: '16px',
-            borderTop: '1px solid #f1f5f9'
-          }}>
+          <div
+            className="deck-form-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '14px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9'
+            }}
+          >
             <div>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
                 Mission Identifier
@@ -679,15 +728,18 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
           )}
 
           {/* Action Row */}
-          <div style={{
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid #f1f5f9',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
+          <div
+            className="deck-action-row"
+            style={{
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '12px'
+            }}
+          >
             <button
               type="submit"
               disabled={isProcessing || !file}
@@ -740,7 +792,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
           padding: '20px 24px',
           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>
                 Pipeline Execution Status
@@ -762,7 +814,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+          <div className="deck-stepper-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
             {STAGES.map((s) => {
               const isCurrent = progressStage === s.num;
               const isDone = progressStage > s.num || progressStage === 5;
@@ -814,7 +866,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span style={{
                   fontSize: '0.65rem',
                   fontWeight: 700,
@@ -837,7 +889,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
               </h3>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => onNavigate && onNavigate('telemetry')}
@@ -873,7 +925,7 @@ export default function SarUploadDeck({ onSpillUploaded, onNavigate }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', paddingTop: '16px' }}>
+          <div className="deck-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', paddingTop: '16px' }}>
             <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Extent Area</div>
               <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
